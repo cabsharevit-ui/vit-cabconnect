@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search, Calendar, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,11 +16,8 @@ interface Train {
   destination_station: string;
 }
 
-interface TrainSearchProps {
-  onTrainSelect: (train: Train, date: string) => void;
-}
-
-export const TrainSearch = ({ onTrainSelect }: TrainSearchProps) => {
+export const TrainSearch = () => {
+  const navigate = useNavigate();
   const [trainNumber, setTrainNumber] = useState("");
   const [travelDate, setTravelDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [searchResult, setSearchResult] = useState<Train | null>(null);
@@ -65,9 +63,9 @@ export const TrainSearch = ({ onTrainSelect }: TrainSearchProps) => {
     }
   };
 
-  const handleCreateGroup = () => {
+  const handleViewGroups = () => {
     if (searchResult) {
-      onTrainSelect(searchResult, travelDate);
+      navigate(`/train/${searchResult.train_number}/${travelDate}`);
     }
   };
 
@@ -147,10 +145,10 @@ export const TrainSearch = ({ onTrainSelect }: TrainSearchProps) => {
               </div>
 
               <Button 
-                onClick={handleCreateGroup}
+                onClick={handleViewGroups}
                 className="w-full bg-gradient-to-r from-accent to-accent/90 hover:from-accent/90 hover:to-accent transition-all duration-300"
               >
-                Join or Create Cab Group
+                View Cab Groups
               </Button>
             </div>
           )}
