@@ -12,12 +12,13 @@ interface CabGroup {
   max_capacity: number;
   current_count: number;
   meeting_point: string;
+  direction: string;
 }
 
 export const ActiveGroups = () => {
   const [groups, setGroups] = useState<CabGroup[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
+  const [selectedGroup, setSelectedGroup] = useState<CabGroup | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const fetchGroups = async () => {
@@ -64,8 +65,11 @@ export const ActiveGroups = () => {
   }, []);
 
   const handleJoinGroup = (groupId: string) => {
-    setSelectedGroupId(groupId);
-    setDialogOpen(true);
+    const group = groups.find(g => g.id === groupId);
+    if (group) {
+      setSelectedGroup(group);
+      setDialogOpen(true);
+    }
   };
 
   const handleJoinSuccess = () => {
@@ -108,12 +112,17 @@ export const ActiveGroups = () => {
         </div>
       </section>
 
-      <JoinGroupDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        groupId={selectedGroupId}
-        onSuccess={handleJoinSuccess}
-      />
+      {selectedGroup && (
+        <JoinGroupDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          groupId={selectedGroup.id}
+          trainNumber={selectedGroup.train_number}
+          travelDate={selectedGroup.travel_date}
+          direction={selectedGroup.direction}
+          onSuccess={handleJoinSuccess}
+        />
+      )}
     </>
   );
 };

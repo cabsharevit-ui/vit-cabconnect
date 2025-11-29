@@ -1,6 +1,7 @@
-import { Users, MapPin, Clock, Calendar } from "lucide-react";
+import { Users, MapPin, Clock, Calendar, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 
 interface CabGroupCardProps {
@@ -12,6 +13,7 @@ interface CabGroupCardProps {
     max_capacity: number;
     current_count: number;
     meeting_point: string;
+    direction: string;
   };
   onJoin: (groupId: string) => void;
 }
@@ -37,6 +39,10 @@ export const CabGroupCard = ({ group, onJoin }: CabGroupCardProps) => {
               </div>
             </div>
           </div>
+          <Badge variant="secondary" className="mt-2 flex items-center gap-1 w-fit">
+            {group.direction === "to_station" ? "VIT → Station" : "Station → VIT"}
+            <ArrowRight className="w-3 h-3" />
+          </Badge>
         </div>
         
         <div className="flex items-center gap-2 text-sm font-medium bg-primary/10 text-primary px-3 py-1.5 rounded-full">

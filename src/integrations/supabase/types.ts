@@ -14,11 +14,49 @@ export type Database = {
   }
   public: {
     Tables: {
+      cab_comments: {
+        Row: {
+          comment: string
+          created_at: string | null
+          group_id: string
+          id: string
+          member_name: string
+          member_phone: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string | null
+          group_id: string
+          id?: string
+          member_name: string
+          member_phone: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          member_name?: string
+          member_phone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cab_comments_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "cab_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cab_groups: {
         Row: {
           created_at: string | null
+          created_by_name: string | null
+          created_by_phone: string | null
           current_count: number | null
           departure_time: string
+          direction: string
           id: string
           max_capacity: number | null
           meeting_point: string | null
@@ -28,8 +66,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by_name?: string | null
+          created_by_phone?: string | null
           current_count?: number | null
           departure_time: string
+          direction?: string
           id?: string
           max_capacity?: number | null
           meeting_point?: string | null
@@ -39,8 +80,11 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by_name?: string | null
+          created_by_phone?: string | null
           current_count?: number | null
           departure_time?: string
+          direction?: string
           id?: string
           max_capacity?: number | null
           meeting_point?: string | null

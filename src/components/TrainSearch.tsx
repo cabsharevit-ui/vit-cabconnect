@@ -20,6 +20,7 @@ export const TrainSearch = () => {
   const navigate = useNavigate();
   const [trainNumber, setTrainNumber] = useState("");
   const [travelDate, setTravelDate] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [direction, setDirection] = useState<"to_station" | "to_college">("to_station");
   const [searchResult, setSearchResult] = useState<Train | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const { toast } = useToast();
@@ -65,7 +66,7 @@ export const TrainSearch = () => {
 
   const handleViewGroups = () => {
     if (searchResult) {
-      navigate(`/train/${searchResult.train_number}/${travelDate}`);
+      navigate(`/train/${searchResult.train_number}/${travelDate}/${direction}`);
     }
   };
 
@@ -78,7 +79,7 @@ export const TrainSearch = () => {
 
         <Card className="p-6 bg-gradient-to-br from-card to-background border-border shadow-[var(--shadow-medium)]">
           <form onSubmit={handleSearch} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-foreground flex items-center gap-2">
                   <Search className="w-4 h-4 text-primary" />
@@ -107,6 +108,30 @@ export const TrainSearch = () => {
                   className="transition-all duration-300 focus:shadow-[0_0_0_3px_hsla(var(--primary),0.1)]"
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Direction
+                </label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => setDirection("to_station")}
+                    variant={direction === "to_station" ? "default" : "outline"}
+                    className="flex-1"
+                  >
+                    To Station
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => setDirection("to_college")}
+                    variant={direction === "to_college" ? "default" : "outline"}
+                    className="flex-1"
+                  >
+                    To College
+                  </Button>
+                </div>
               </div>
             </div>
 
