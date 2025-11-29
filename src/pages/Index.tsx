@@ -1,10 +1,19 @@
 import { Hero } from "@/components/Hero";
 import { TrainSearch } from "@/components/TrainSearch";
 import { ActiveGroups } from "@/components/ActiveGroups";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-background">
+      <div className="absolute top-4 right-4">
+        <Button onClick={() => navigate("/auth")} variant="outline">
+          Sign In
+        </Button>
+      </div>
       <Hero />
       <TrainSearch />
       <ActiveGroups />
