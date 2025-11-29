@@ -11,10 +11,13 @@ interface JoinGroupDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   groupId: string | null;
+  trainNumber: string;
+  travelDate: string;
+  direction: string;
   onSuccess: () => void;
 }
 
-export const JoinGroupDialog = ({ open, onOpenChange, groupId, onSuccess }: JoinGroupDialogProps) => {
+export const JoinGroupDialog = ({ open, onOpenChange, groupId, trainNumber, travelDate, direction, onSuccess }: JoinGroupDialogProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,6 +30,28 @@ export const JoinGroupDialog = ({ open, onOpenChange, groupId, onSuccess }: Join
     setIsSubmitting(true);
 
     try {
+      // Check if user already has a group for this train
+      const { data: existingMembership, error: memberCheckError } = await supabase
+        .from("cab_members")
+        .select("id, group_id, cab_groups!inner(train_number, travel_date, direction)")
+        .eq("phone_number", phone.trim())
+        .eq("cab_groups.train_number", trainNumber)
+        .eq("cab_groups.travel_date", travelDate)
+        .eq("cab_groups.direction", direction)
+        .maybeSingle();
+
+      if (memberCheckError && memberCheckError.code !== 'PGRST116') throw memberCheckError;
+
+      if (existingMembership) {
+        toast({
+          title: "Already in a group",
+          description: "You already have a cab group for this train. Only one booking per train allowed.",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const { error } = await supabase
         .from("cab_members")
         .insert({

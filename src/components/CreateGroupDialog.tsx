@@ -20,10 +20,11 @@ interface CreateGroupDialogProps {
   onOpenChange: (open: boolean) => void;
   train: Train | null;
   travelDate: string;
+  direction: string;
   onSuccess: () => void;
 }
 
-export const CreateGroupDialog = ({ open, onOpenChange, train, travelDate, onSuccess }: CreateGroupDialogProps) => {
+export const CreateGroupDialog = ({ open, onOpenChange, train, travelDate, direction, onSuccess }: CreateGroupDialogProps) => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [maxCapacity, setMaxCapacity] = useState("4");
@@ -38,48 +39,51 @@ export const CreateGroupDialog = ({ open, onOpenChange, train, travelDate, onSuc
     setIsSubmitting(true);
 
     try {
-      // First, check if a group already exists for this train and date
-      const { data: existingGroup, error: checkError } = await supabase
-        .from("cab_groups")
-        .select("id")
-        .eq("train_number", train.train_number)
-        .eq("travel_date", travelDate)
+      // Check if user already has a group for this train
+      const { data: existingMembership, error: memberCheckError } = await supabase
+        .from("cab_members")
+        .select("id, group_id, cab_groups!inner(train_number, travel_date, direction)")
+        .eq("phone_number", phone.trim())
+        .eq("cab_groups.train_number", train.train_number)
+        .eq("cab_groups.travel_date", travelDate)
+        .eq("cab_groups.direction", direction)
         .maybeSingle();
 
-      if (checkError) throw checkError;
+      if (memberCheckError && memberCheckError.code !== 'PGRST116') throw memberCheckError;
 
-      let groupId: string;
-
-      if (existingGroup) {
-        // Group exists, just join it
-        groupId = existingGroup.id;
+      if (existingMembership) {
         toast({
-          title: "Group already exists!",
-          description: "Joining the existing group for this train.",
+          title: "Already in a group",
+          description: "You already have a cab group for this train. Only one booking per train allowed.",
+          variant: "destructive",
         });
-      } else {
-        // Create new group
-        const { data: newGroup, error: createError } = await supabase
-          .from("cab_groups")
-          .insert({
-            train_number: train.train_number,
-            travel_date: travelDate,
-            departure_time: train.departure_time,
-            max_capacity: parseInt(maxCapacity),
-            meeting_point: meetingPoint,
-          })
-          .select()
-          .single();
-
-        if (createError) throw createError;
-        groupId = newGroup.id;
+        setIsSubmitting(false);
+        return;
       }
+
+      // Create new group with creator info
+      const { data: newGroup, error: createError } = await supabase
+        .from("cab_groups")
+        .insert({
+          train_number: train.train_number,
+          travel_date: travelDate,
+          departure_time: train.departure_time,
+          max_capacity: parseInt(maxCapacity),
+          meeting_point: meetingPoint,
+          direction: direction,
+          created_by_name: name.trim(),
+          created_by_phone: phone.trim(),
+        })
+        .select()
+        .single();
+
+      if (createError) throw createError;
 
       // Add the creator as a member
       const { error: memberError } = await supabase
         .from("cab_members")
         .insert({
-          group_id: groupId,
+          group_id: newGroup.id,
           member_name: name.trim(),
           phone_number: phone.trim(),
         });
@@ -88,7 +92,7 @@ export const CreateGroupDialog = ({ open, onOpenChange, train, travelDate, onSuc
 
       toast({
         title: "Success!",
-        description: existingGroup ? "You've joined the group!" : "Group created and you've joined it!",
+        description: "Group created! As the creator, you're responsible for booking the cab.",
       });
 
       // Reset form

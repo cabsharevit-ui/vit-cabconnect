@@ -4,9 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { CabGroupCard } from "@/components/CabGroupCard";
 import { JoinGroupDialog } from "@/components/JoinGroupDialog";
 import { CreateGroupDialog } from "@/components/CreateGroupDialog";
+import { GroupMembers } from "@/components/GroupMembers";
+import { GroupComments } from "@/components/GroupComments";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Plus, Train, Calendar, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Train, Calendar, Clock, Loader2, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
 interface CabGroup {
   id: string;
@@ -16,6 +19,9 @@ interface CabGroup {
   max_capacity: number;
   current_count: number;
   meeting_point: string;
+  direction: string;
+  created_by_name: string | null;
+  created_by_phone: string | null;
 }
 
 interface TrainData {
@@ -27,7 +33,7 @@ interface TrainData {
 }
 
 const TrainGroups = () => {
-  const { trainNumber, date } = useParams();
+  const { trainNumber, date, direction } = useParams();
   const navigate = useNavigate();
   const [train, setTrain] = useState<TrainData | null>(null);
   const [groups, setGroups] = useState<CabGroup[]>([]);
@@ -37,7 +43,7 @@ const TrainGroups = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   const fetchTrainAndGroups = async () => {
-    if (!trainNumber || !date) return;
+    if (!trainNumber || !date || !direction) return;
 
     try {
       // Fetch train details
@@ -50,12 +56,13 @@ const TrainGroups = () => {
       if (trainError) throw trainError;
       setTrain(trainData);
 
-      // Fetch groups for this train and date
+      // Fetch groups for this train, date, and direction
       const { data: groupsData, error: groupsError } = await supabase
         .from("cab_groups")
         .select("*")
         .eq("train_number", trainNumber)
         .eq("travel_date", date)
+        .eq("direction", direction)
         .eq("status", "active")
         .order("created_at", { ascending: true });
 
@@ -90,7 +97,7 @@ const TrainGroups = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [trainNumber, date]);
+  }, [trainNumber, date, direction]);
 
   const handleJoinGroup = (groupId: string) => {
     setSelectedGroupId(groupId);
@@ -173,13 +180,24 @@ const TrainGroups = () => {
 
             <div className="flex items-center justify-between mt-6 text-sm text-white/80">
               <div>
-                <div className="font-medium text-white">Katpadi Junction</div>
-                <div>Departure Station</div>
+                <div className="font-medium text-white">
+                  {direction === "to_station" ? "VIT Vellore" : "Katpadi Junction"}
+                </div>
+                <div>{direction === "to_station" ? "Starting Point" : "Arrival"}</div>
               </div>
-              <div className="flex-1 mx-4 border-t-2 border-dashed border-white/30"></div>
+              <div className="flex-1 mx-4 flex items-center justify-center gap-2">
+                <div className="flex-1 border-t-2 border-dashed border-white/30"></div>
+                <Badge variant="secondary" className="bg-white/20 text-white border-0">
+                  {direction === "to_station" ? "To Station" : "To College"}
+                </Badge>
+                <ArrowRight className="w-4 h-4 text-white" />
+                <div className="flex-1 border-t-2 border-dashed border-white/30"></div>
+              </div>
               <div className="text-right">
-                <div className="font-medium text-white">{train.destination_station}</div>
-                <div>Destination</div>
+                <div className="font-medium text-white">
+                  {direction === "to_station" ? "Katpadi Junction" : "VIT Vellore"}
+                </div>
+                <div>{direction === "to_station" ? "Destination" : "Destination"}</div>
               </div>
             </div>
           </div>
@@ -216,9 +234,17 @@ const TrainGroups = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="space-y-8">
               {groups.map((group) => (
-                <CabGroupCard key={group.id} group={group} onJoin={handleJoinGroup} />
+                <div key={group.id} className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  <div className="lg:col-span-1">
+                    <CabGroupCard group={group} onJoin={handleJoinGroup} />
+                  </div>
+                  <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <GroupMembers groupId={group.id} creatorPhone={group.created_by_phone} />
+                    <GroupComments groupId={group.id} />
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -229,6 +255,9 @@ const TrainGroups = () => {
         open={joinDialogOpen}
         onOpenChange={setJoinDialogOpen}
         groupId={selectedGroupId}
+        trainNumber={trainNumber!}
+        travelDate={date!}
+        direction={direction!}
         onSuccess={fetchTrainAndGroups}
       />
 
@@ -237,6 +266,7 @@ const TrainGroups = () => {
         onOpenChange={setCreateDialogOpen}
         train={train}
         travelDate={date!}
+        direction={direction!}
         onSuccess={fetchTrainAndGroups}
       />
     </div>
